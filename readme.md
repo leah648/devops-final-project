@@ -441,41 +441,116 @@ All applications must be automatically deployed from Git.
 
 # 12. Argo Rollouts – Canary Deployment
 
-Implement Canary deployment using Argo Rollouts.
+This project uses Argo Rollouts for Canary deployments. The Helm chart in this repository now renders an Argo Rollouts `Rollout` resource (instead of a plain `Deployment`) when `rollout.enabled` is true in the chart values. This enables gradual traffic shifting and safe rollbacks driven by GitOps.
 
-The application should gradually shift traffic from the old version to the new version.
+Goals and requirements
 
-Minimum three rollout steps are required.
+- Gradually shift traffic from the stable version to the new (canary) version.
+- Minimum three rollout steps (example: 20%, 50%, 100%).
+- Support rollback and provide a documented rollback procedure.
 
-Use:
+Built-in chart behavior
 
-```text
-20%
-50%
-100%
+- The Helm chart `helm/hello-world` produces a `Rollout` resource using the values at `environments/<env>/values.yaml`.
+- Rollout steps and pause durations are configurable via `values.yaml` under the `rollout` key. Example default in `helm/hello-world/values.yaml`:
+
+```yaml
+rollout:
+  enabled: true
+  steps:
+    - setWeight: 20
+      pause:
+        duration: 30s
+    - setWeight: 50
+      pause:
+        duration: 30s
+    - setWeight: 100
+      pause:
+        duration: 30s
 ```
 
-or an equivalent gradual progression.
+Notes and prerequisites
 
-The rollout must support rollback.
+- The Argo Rollouts controller (CRDs and controller) must be installed in the target cluster for `Rollout` resources to work: https://argoproj.github.io/argo-rollouts/installation/
+- Argo CD supports CRDs and will manage `Rollout` resources as part of the chart.
+- Replace placeholders such as `<DOCKERHUB_USER>` and `<TAG>` in your environment/CI pipeline before applying resources.
 
-Demonstrate/document a rollback scenario.
+Helm commands (local validation)
 
-The implementation should include:
+- Lint the chart:
 
-* Argo Rollout resource
-* Canary strategy
-* At least 3 traffic-shift steps
-* Stable version
-* Canary version
-* Rollback procedure
+```bash
+helm lint ./helm/hello-world
+```
 
-Document the commands required to:
+- Render templates (inspect the produced Rollout and Service YAML):
 
-1. Start a new rollout
-2. Observe rollout status
-3. Promote the rollout
-4. Abort/rollback the rollout
+```bash
+helm template hello-world ./helm/hello-world -f environments/dev/values.yaml
+```
+
+- Install the chart into a namespace (example for dev):
+
+```bash
+helm install hello-world-dev ./helm/hello-world -n hello-world-dev --create-namespace -f environments/dev/values.yaml
+```
+
+Argo Rollouts commands (runtime operations)
+
+1) Start a new rollout (update the image on the Rollout):
+
+```bash
+kubectl set image rollout/<RELEASE-NAME>-hello-world <container-name>=<DOCKERHUB_USER>/hello-world:<NEW_TAG>
+# Example if using fullname helper: kubectl set image rollout/hello-world-dev-hello-world hello-world=<DOCKERHUB_USER>/hello-world:dev-123
+```
+
+2) Observe rollout status (watch progress and health):
+
+```bash
+kubectl argo-rollouts get rollout <ROLLOUT_NAME> -w
+# or use Argo CD UI to inspect the Rollout
+```
+
+3) Promote the rollout to stable (immediately finish and set canary as stable):
+
+```bash
+kubectl argo-rollouts promote <ROLLOUT_NAME>
+```
+
+4) Abort / Rollback the rollout (stop and revert to previous stable revision):
+
+```bash
+kubectl argo-rollouts abort <ROLLOUT_NAME>
+# Alternatively, set the image back to a known-good tag to trigger a stable rollout:
+kubectl set image rollout/<ROLLOUT_NAME> <container-name>=<DOCKERHUB_USER>/hello-world:<KNOWN_GOOD_TAG>
+```
+
+Example workflow (GitOps-driven)
+
+1. CI pipeline builds and scans an image, then pushes it to the image registry and updates the environment values file under `environments/<env>/values.yaml` (image.tag).
+2. Argo CD detects the change in Git and applies the Helm chart, producing a new `Rollout` revision.
+3. Argo Rollouts performs the Canary steps according to the configured `rollout.steps`.
+4. Operators can observe, promote, or abort the rollout using the `kubectl argo-rollouts` plugin or the Argo CD UI.
+
+Rollback demonstration
+
+- To demonstrate rollback, trigger a rollout to a new tag that fails health checks (or simulate a failure), then use:
+
+```bash
+kubectl argo-rollouts abort <ROLLOUT_NAME>
+```
+
+- Verify the Rollout returns to the previous stable revision and that service traffic is restored to the stable pods.
+
+Manual validation checklist for Rollouts
+
+- [ ] Argo Rollouts controller installed in cluster
+- [ ] Helm chart renders a `Rollout` resource when `rollout.enabled: true`
+- [ ] Argo CD applies the chart and creates `Rollout` resource
+- [ ] Rollout proceeds through 20/50/100 (or configured) steps during an image update
+- [ ] Promote and abort commands behave as expected
+
+---
 
 ---
 

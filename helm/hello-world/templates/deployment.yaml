@@ -1,5 +1,5 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
 metadata:
   name: {{ include "hello-world.fullname" . }}
   labels:
@@ -41,3 +41,11 @@ spec:
             initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+  strategy:
+    canary:
+      steps:
+{{ toYaml .Values.rollout.steps | indent 8 }}
+      trafficRouting:
+        service:
+          name: {{ include "hello-world.fullname" . }}-svc
+          port: {{ .Values.service.port }}

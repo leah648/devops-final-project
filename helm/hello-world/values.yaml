@@ -41,3 +41,17 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+# Argo Rollouts configuration
+rollout:
+  enabled: true
+  steps:
+    - setWeight: 20
+      pause:
+        duration: 30s
+    - setWeight: 50
+      pause:
+        duration: 30s
+    - setWeight: 100
+      pause:
+        duration: 30s

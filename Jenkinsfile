@@ -3,6 +3,7 @@ pipeline {
 
   parameters {
     string(name: 'IMAGE_TAG', defaultValue: '', description: 'Image tag to use (optional). If empty, a tag based on build number will be used')
+    string(name: 'TARGET_ENV', defaultValue: 'dev', description: 'Target environment to update (dev, stage, prod)')
   }
 
   environment {
@@ -84,24 +85,71 @@ pipeline {
 
     stage('Update GitOps Repository') {
       steps {
-        echo 'Updating GitOps repository with new image tag (placeholder steps)'
+        echo 'Updating GitOps repository with new image tag (safe update of environments/<env>/values.yaml)'
         script {
-          // The following is an example. Replace GITOPS_REPO_URL and GIT_CREDENTIALS_ID with real values
-          // and ensure the Jenkins agent has git installed.
+          // The following updates environments/<env>/values.yaml.image.tag and commits the change.
+          // Requirements: git installed on the agent and GIT credentials configured in Jenkins.
           if (env.GITOPS_REPO_URL == '<GITOPS_REPO_URL>') {
             echo 'GITOPS_REPO_URL is a placeholder. Skipping automatic update. Configure GITOPS_REPO_URL and credentials to enable this step.'
           } else {
             withCredentials([usernamePassword(credentialsId: env.GIT_CREDENTIALS_ID, usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
               sh '''
-                set -e
-                git clone ${GITOPS_REPO_URL} gitops
-                cd gitops
-                # Example: update environments/dev/values.yaml or a kustomize image tag
-                # The exact file to edit depends on your GitOps repo structure.
-                # sed -i "s#image: .*#image: ${IMAGE}#g" environments/dev/values.yaml || true
-                git add -A
-                git commit -m "ci: update image to ${IMAGE}"
-                git push https://${GIT_USER}:${GIT_PASS}@${GITOPS_REPO_URL#https://} HEAD:main
+                set -euo pipefail
+                WORKDIR=$(mktemp -d)
+                echo "Cloning ${GITOPS_REPO_URL} into ${WORKDIR}"
+                git clone "${GITOPS_REPO_URL}" "${WORKDIR}/repo"
+                cd "${WORKDIR}/repo"
+                git config user.email "ci@jenkins.local"
+                git config user.name "jenkins-ci"
+
+                BRANCH="ci/update-image-${IMAGE_TAG_ACTUAL}"
+                echo "Creating branch ${BRANCH}"
+                git checkout -b "${BRANCH}"
+
+                TARGET_FILE="environments/${TARGET_ENV}/values.yaml"
+                if [ ! -f "${TARGET_FILE}" ]; then
+                  echo "Target file ${TARGET_FILE} not found"
+                  exit 1
+                fi
+
+                echo "Updating image.tag in ${TARGET_FILE} to ${IMAGE_TAG_ACTUAL}"
+                # Prefer sed for portability over external YAML tools. Assumes a simple 'tag: ...' line exists under 'image:' in the YAML.
+                # This will replace the first occurrence of a line starting with '  tag:' or 'tag:' with the new tag.
+                if command -v sed >/dev/null 2>&1; then
+                  # Create a backup in case of unexpected format
+                  sed -n '1,200p' "${TARGET_FILE}" > /dev/null || true
+                  # Use extended regex replacement (POSIX sed compatible): replace line that starts with optional spaces then 'tag:'
+                  sed -i.bak -E "s#^(\s*tag:\s*).*#\1\"${IMAGE_TAG_ACTUAL}\"#" "${TARGET_FILE}"
+                else
+                  python - <<PY
+import sys, yaml
+p = sys.argv[1]
+tag = sys.argv[2]
+with open(p) as f:
+    d = yaml.safe_load(f)
+if not isinstance(d, dict):
+    raise SystemExit('Unexpected YAML structure')
+d.setdefault('image', {})
+d['image']['tag'] = tag
+with open(p, 'w') as f:
+    yaml.safe_dump(d, f, default_flow_style=False)
+print('Updated', p)
+PY "${TARGET_FILE}" "${IMAGE_TAG_ACTUAL}"
+                fi
+
+                git add "${TARGET_FILE}"
+                if git diff --staged --quiet; then
+                  echo "No changes to commit"
+                else
+                  git commit -m "ci: update ${TARGET_FILE} image.tag -> ${IMAGE_TAG_ACTUAL}"
+                  echo "Pushing branch ${BRANCH} to origin"
+                  # Push using HTTPS with credentials. If using SSH, configure Jenkins with SSH credentials and change accordingly.
+                  GIT_URL_SAFE=${GITOPS_REPO_URL#https://}
+                  git push "https://${GIT_USER}:${GIT_PASS}@${GIT_URL_SAFE}" HEAD:main
+                fi
+
+                # cleanup
+                rm -rf "${WORKDIR}"
               '''
             }
           }
