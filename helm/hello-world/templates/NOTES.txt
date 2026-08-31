@@ -1,0 +1,16 @@
+Thank you for installing {{ .Chart.Name }}!
+
+Your application should be reachable depending on your Service type:
+
+{{- if eq .Values.service.type "NodePort" }}
+  - Use the node's IP and the nodePort ({{ .Values.service.nodePort | default "assigned by cluster" }})
+{{- else if eq .Values.service.type "LoadBalancer" }}
+  - Use the external IP of the LoadBalancer once provisioned.
+{{- end }}
+
+To check deployment status:
+  kubectl get deployments
+  kubectl get pods -l app={{ include "hello-world.fullname" . }}
+
+To uninstall:
+  helm uninstall {{ .Release.Name }}
