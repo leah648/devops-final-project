@@ -2,7 +2,7 @@ import yaml
 from pathlib import Path
 import sys
 
-files = [Path('k8s/deployment.yaml'), Path('k8s/service.yaml')]
+files = [Path('k8s/deployment.yaml'), Path('k8s/service.yaml'), Path('argocd/app-of-apps.yaml'), Path('argocd/apps/dev.yaml'), Path('argocd/apps/stage.yaml'), Path('argocd/apps/prod.yaml'), Path('rollout/rollout.yaml'), Path('rollout/service.yaml')]
 errors = []
 for f in files:
     if not f.exists():

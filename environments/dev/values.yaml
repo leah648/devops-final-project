@@ -1,0 +1,19 @@
+# Environment: dev
+# Lower resources, single replica, image tag 'dev'
+replicaCount: 1
+image:
+  repository: "<DOCKERHUB_USER>/hello-world"
+  tag: "dev"
+  pullPolicy: IfNotPresent
+
+service:
+  type: NodePort
+  port: 80
+
+resources:
+  requests:
+    cpu: "50m"
+    memory: "64Mi"
+  limits:
+    cpu: "200m"
+    memory: "128Mi"

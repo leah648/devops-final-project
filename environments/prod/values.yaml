@@ -1,0 +1,19 @@
+# Environment: prod
+# Higher resources, three replicas, image tag 'prod'
+replicaCount: 3
+image:
+  repository: "<DOCKERHUB_USER>/hello-world"
+  tag: "prod"
+  pullPolicy: IfNotPresent
+
+service:
+  type: LoadBalancer
+  port: 80
+
+resources:
+  requests:
+    cpu: "200m"
+    memory: "256Mi"
+  limits:
+    cpu: "1000m"
+    memory: "512Mi"

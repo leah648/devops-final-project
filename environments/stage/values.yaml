@@ -1,0 +1,19 @@
+# Environment: stage
+# Medium resources, two replicas, image tag 'stage'
+replicaCount: 2
+image:
+  repository: "<DOCKERHUB_USER>/hello-world"
+  tag: "stage"
+  pullPolicy: IfNotPresent
+
+service:
+  type: NodePort
+  port: 80
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "400m"
+    memory: "256Mi"
