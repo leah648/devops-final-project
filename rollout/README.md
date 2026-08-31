@@ -13,7 +13,7 @@ What the rollout does:
 - The Rollout supports rollbacks via the argo-rollouts kubectl plugin commands.
 
 Placeholders you must replace before use:
-- <DOCKERHUB_USER>/hello-world:<TAG> in rollout/rollout.yaml — set to your image repository and tag.
+- leahm90/hello-world:<TAG> in rollout/rollout.yaml — set to your image repository and tag.
 
 Prerequisites:
 - Argo Rollouts controller must be installed in your cluster: https://argoproj.github.io/argo-rollouts/installation/

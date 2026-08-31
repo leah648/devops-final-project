@@ -2,7 +2,7 @@
 # Medium resources, two replicas, image tag 'stage'
 replicaCount: 2
 image:
-  repository: "<DOCKERHUB_USER>/hello-world"
+  repository: "leahm90/hello-world"
   tag: "stage"
   pullPolicy: IfNotPresent
 

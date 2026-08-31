@@ -2,7 +2,7 @@
 # Higher resources, three replicas, image tag 'prod'
 replicaCount: 3
 image:
-  repository: "<DOCKERHUB_USER>/hello-world"
+  repository: "leahm90/hello-world"
   tag: "prod"
   pullPolicy: IfNotPresent
 

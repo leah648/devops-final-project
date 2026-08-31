@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: hello-world
-          image: "<DOCKERHUB_USER>/hello-world:<TAG>"
+          image: "leahm90/hello-world:<TAG>"
           ports:
             - containerPort: 5000
           resources:

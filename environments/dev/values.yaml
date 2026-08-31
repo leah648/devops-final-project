@@ -2,7 +2,7 @@
 # Lower resources, single replica, image tag 'dev'
 replicaCount: 1
 image:
-  repository: "<DOCKERHUB_USER>/hello-world"
+  repository: "leahm90/hello-world"
   tag: "dev"
   pullPolicy: IfNotPresent
 

@@ -473,7 +473,7 @@ Notes and prerequisites
 
 - The Argo Rollouts controller (CRDs and controller) must be installed in the target cluster for `Rollout` resources to work: https://argoproj.github.io/argo-rollouts/installation/
 - Argo CD supports CRDs and will manage `Rollout` resources as part of the chart.
-- Replace placeholders such as `<DOCKERHUB_USER>` and `<TAG>` in your environment/CI pipeline before applying resources.
+- Replace placeholders such as `<TAG>` in your environment/CI pipeline before applying resources. This repository is configured for the provided usernames: GitHub user 'leah648' and Docker Hub user 'leahm90'.
 
 Helm commands (local validation)
 

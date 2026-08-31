@@ -18,7 +18,7 @@ spec:
       containers:
         - name: hello-world
           # Replace placeholder with actual image (do not commit credentials)
-          image: "<DOCKERHUB_USER>/hello-world:<TAG>"
+          image: "leahm90/hello-world:<TAG>"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5000

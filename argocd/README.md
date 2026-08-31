@@ -11,7 +11,7 @@ Structure:
 
 Placeholders to replace before applying:
 
-- <GITOPS_REPO_URL> : URL of the Git repository (this repository) that Argo CD will watch. Use https:// or git@ URL.
+- https://github.com/leah648/devops-final-project.git : URL of the Git repository (this repository) that Argo CD will watch.
 
 Notes:
 

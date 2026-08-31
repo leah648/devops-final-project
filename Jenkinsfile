@@ -8,12 +8,12 @@ pipeline {
 
   environment {
     # Placeholder: set your Docker Hub repo (do not commit real username)
-    DOCKERHUB_REPO = '<DOCKERHUB_USER>/hello-world'
+    DOCKERHUB_REPO = 'leahm90/hello-world'
     # Credential IDs (placeholders) - configure in Jenkins Credentials
     DOCKERHUB_CREDENTIALS_ID = 'DOCKERHUB_CREDENTIALS'
     GIT_CREDENTIALS_ID = 'GIT_CREDS'
     # GitOps repository URL placeholder (repo that ArgoCD will watch)
-    GITOPS_REPO_URL = '<GITOPS_REPO_URL>'
+    GITOPS_REPO_URL = 'https://github.com/leah648/devops-final-project.git'
   }
 
   options {
@@ -89,7 +89,7 @@ pipeline {
         script {
           // The following updates environments/<env>/values.yaml.image.tag and commits the change.
           // Requirements: git installed on the agent and GIT credentials configured in Jenkins.
-          if (env.GITOPS_REPO_URL == '<GITOPS_REPO_URL>') {
+          if (env.GITOPS_REPO_URL == 'https://github.com/leah648/devops-final-project.git') {
             echo 'GITOPS_REPO_URL is a placeholder. Skipping automatic update. Configure GITOPS_REPO_URL and credentials to enable this step.'
           } else {
             withCredentials([usernamePassword(credentialsId: env.GIT_CREDENTIALS_ID, usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
